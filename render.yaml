@@ -10,7 +10,7 @@ services:
       - key: PYTHON_VERSION
         value: 3.11
       - key: DATABASE_URL
-        value: sqlite:///./akrin_chatbot.db
+        value: sqlite:///tmp/akrin_chatbot.db
       - key: USE_IN_MEMORY_CACHE
         value: true
       # API Keys from Render Dashboard (set these in Render UI)
@@ -47,9 +47,3 @@ services:
         - src/**
         - requirements.txt
         - render.yaml
-    
-    # Disk for SQLite persistence (optional)
-    disk:
-      name: akrin-data
-      mountPath: /data
-      sizeGB: 1  # Free tier includes 1GB
