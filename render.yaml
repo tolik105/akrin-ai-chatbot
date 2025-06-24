@@ -53,17 +53,3 @@ services:
       name: akrin-data
       mountPath: /data
       sizeGB: 1  # Free tier includes 1GB
-
-  # Static site for chat widget (optional)
-  - type: static
-    name: akrin-chat-widget
-    buildCommand: echo "No build needed"
-    staticPublishPath: ./static
-    headers:
-      - path: /*
-        name: Access-Control-Allow-Origin
-        value: "*"
-    routes:
-      - type: rewrite
-        source: /
-        destination: /chat-widget.html
