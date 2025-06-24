@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AKRIN Chat Widget</title>
+    <style>
+        /* Chat Widget Styles */
+        #akrin-chat-widget {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 380px;
+            height: 600px;
+            max-height: 80vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 5px 40px rgba(0,0,0,0.15);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        #akrin-chat-widget.minimized {
+            height: 60px;
+            width: 60px;
+            border-radius: 30px;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .chat-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .chat-header .status {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #4CAF50;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .minimize-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .minimize-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f7f8fa;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .minimized .chat-messages,
+        .minimized .chat-input-container {
+            display: none;
+        }
+
+        .message {
+            max-width: 75%;
+            word-wrap: break-word;
+            border-radius: 18px;
+            padding: 12px 18px;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            background: #3498db;
+            color: white;
+            align-self: flex-end;
+        }
+
+        .message.assistant {
+            background: white;
+            color: #2c3e50;
+            align-self: flex-start;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .message.system {
+            background: #e8f4f8;
+            color: #5a6c7d;
+            align-self: center;
+            font-size: 14px;
+            text-align: center;
+            max-width: 90%;
+        }
+
+        .message-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 12px 18px;
+            background: white;
+            border-radius: 18px;
+            align-self: flex-start;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #bbb;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.5;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            border: 1px solid #e5e7eb;
+            border-radius: 24px;
+            padding: 12px 20px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .chat-input:focus {
+            border-color: #3498db;
+        }
+
+        .send-button {
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .send-button:hover {
+            background: #2980b9;
+        }
+
+        .send-button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 450px) {
+            #akrin-chat-widget {
+                width: 100%;
+                height: 100%;
+                bottom: 0;
+                right: 0;
+                border-radius: 0;
+                max-height: 100vh;
+            }
+        }
+
+        /* Chat bubble when minimized */
+        .chat-bubble {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            background: #3498db;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+        }
+
+        .minimized .chat-bubble {
+            width: 60px;
+            height: 60px;
+            bottom: 0;
+            right: 0;
+        }
+
+        .chat-bubble:hover {
+            transform: scale(1.05);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #e74c3c;
+            color: white;
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 11px;
+            font-weight: bold;
+            min-width: 18px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="akrin-chat-widget" class="minimized">
+        <div class="chat-header" onclick="toggleChat()">
+            <div>
+                <h3>AKRIN Support</h3>
+                <div class="status">
+                    <span class="status-dot"></span>
+                    <span id="status-text">Online</span>
+                </div>
+            </div>
+            <button class="minimize-btn" onclick="toggleChat(event)">−</button>
+        </div>
+        
+        <div class="chat-messages" id="chat-messages">
+            <!-- Messages will be added here -->
+        </div>
+        
+        <div class="chat-input-container">
+            <div class="chat-input-wrapper">
+                <input 
+                    type="text" 
+                    class="chat-input" 
+                    id="chat-input" 
+                    placeholder="Type your message..."
+                    onkeypress="handleKeyPress(event)"
+                >
+                <button class="send-button" id="send-button" onclick="sendMessage()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 2L11 13"></path>
+                        <path d="M22 2L15 22L11 13L2 9L22 2Z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="chat-bubble" onclick="toggleChat()">
+            💬
+            <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - Auto-detect production vs development
+        const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+        const WS_URL = isProduction 
+            ? `wss://${window.location.hostname}/ws/chat/`
+            : 'ws://localhost:8000/ws/chat/';
+        const session_id = 'session-' + Math.random().toString(36).substr(2, 9);
+        let ws = null;
+        let isConnected = false;
+        let isMinimized = true;
+        let unreadCount = 0;
+
+        // Initialize
+        function init() {
+            connectWebSocket();
+        }
+
+        // WebSocket connection
+        function connectWebSocket() {
+            ws = new WebSocket(WS_URL + session_id);
+            
+            ws.onopen = () => {
+                console.log('Connected to chat server');
+                isConnected = true;
+                updateStatus('Online');
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleIncomingMessage(data);
+            };
+            
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                updateStatus('Error');
+            };
+            
+            ws.onclose = () => {
+                console.log('Disconnected from chat server');
+                isConnected = false;
+                updateStatus('Offline');
+                // Attempt to reconnect after 3 seconds
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
+
+        // Handle incoming messages
+        function handleIncomingMessage(data) {
+            switch(data.type) {
+                case 'system':
+                    addMessage(data.message, 'system');
+                    break;
+                case 'ai_response':
+                    removeTypingIndicator();
+                    addMessage(data.message, 'assistant');
+                    break;
+                case 'agent_message':
+                    removeTypingIndicator();
+                    addMessage(data.message, 'assistant');
+                    break;
+                case 'agent_assigned':
+                    addMessage(data.message, 'system');
+                    updateStatus('Agent Connected');
+                    break;
+                case 'handoff_requested':
+                    addMessage(data.message, 'system');
+                    if (data.position_in_queue) {
+                        addMessage(`You are #${data.position_in_queue} in queue`, 'system');
+                    }
+                    break;
+                case 'error':
+                    removeTypingIndicator();
+                    addMessage(data.message, 'system');
+                    break;
+            }
+            
+            // Update unread count if minimized
+            if (isMinimized && data.type !== 'system') {
+                unreadCount++;
+                updateNotificationBadge();
+            }
+        }
+
+        // Send message
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (!message || !isConnected) return;
+            
+            // Add user message to chat
+            addMessage(message, 'user');
+            
+            // Send to server
+            ws.send(JSON.stringify({ message: message }));
+            
+            // Clear input and show typing indicator
+            input.value = '';
+            showTypingIndicator();
+        }
+
+        // Add message to chat
+        function addMessage(text, type) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            messageDiv.innerHTML = `
+                ${text}
+                ${type !== 'system' ? `<div class="message-time">${time}</div>` : ''}
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Typing indicator
+        function showTypingIndicator() {
+            const messagesContainer = document.getElementById('chat-messages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator';
+            typingDiv.id = 'typing-indicator';
+            typingDiv.innerHTML = `
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+            `;
+            messagesContainer.appendChild(typingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        // Toggle chat window
+        function toggleChat(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            
+            const widget = document.getElementById('akrin-chat-widget');
+            isMinimized = !isMinimized;
+            
+            if (isMinimized) {
+                widget.classList.add('minimized');
+            } else {
+                widget.classList.remove('minimized');
+                unreadCount = 0;
+                updateNotificationBadge();
+                // Focus input when opened
+                setTimeout(() => {
+                    document.getElementById('chat-input').focus();
+                }, 300);
+            }
+        }
+
+        // Update connection status
+        function updateStatus(status) {
+            document.getElementById('status-text').textContent = status;
+        }
+
+        // Update notification badge
+        function updateNotificationBadge() {
+            const badge = document.getElementById('notification-badge');
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount;
+                badge.style.display = 'block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // Handle enter key
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

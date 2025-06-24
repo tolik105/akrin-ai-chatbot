@@ -1,0 +1,69 @@
+# Render.com deployment configuration
+services:
+  # Main API Service
+  - type: web
+    name: akrin-chatbot-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt && python -m spacy download en_core_web_md
+    startCommand: uvicorn src.api.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+      - key: DATABASE_URL
+        value: sqlite:///./akrin_chatbot.db
+      - key: USE_IN_MEMORY_CACHE
+        value: true
+      # API Keys from Render Dashboard (set these in Render UI)
+      - key: OPENAI_API_KEY
+        sync: false  # Set in Render dashboard
+      - key: ANTHROPIC_API_KEY
+        sync: false  # Set in Render dashboard
+      - key: PINECONE_API_KEY
+        sync: false  # Set in Render dashboard
+      - key: JWT_SECRET_KEY
+        generateValue: true  # Auto-generate secure key
+      # Application settings
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: PINECONE_ENVIRONMENT
+        value: us-east-1-aws
+      - key: PINECONE_INDEX_NAME
+        value: akrin-knowledge-base
+    
+    # Health check
+    healthCheckPath: /api/health
+    
+    # Auto-deploy from GitHub
+    autoDeploy: true
+    
+    # Plan (use free tier)
+    plan: free
+    
+    # Build filters - only rebuild on source changes
+    buildFilter:
+      paths:
+        - src/**
+        - requirements.txt
+        - render.yaml
+    
+    # Disk for SQLite persistence (optional)
+    disk:
+      name: akrin-data
+      mountPath: /data
+      sizeGB: 1  # Free tier includes 1GB
+
+  # Static site for chat widget (optional)
+  - type: static
+    name: akrin-chat-widget
+    buildCommand: echo "No build needed"
+    staticPublishPath: ./static
+    headers:
+      - path: /*
+        name: Access-Control-Allow-Origin
+        value: "*"
+    routes:
+      - type: rewrite
+        source: /
+        destination: /chat-widget.html

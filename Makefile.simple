@@ -1,0 +1,87 @@
+# Simple Makefile for development without Docker
+.PHONY: help install dev test clean run-local setup-local
+
+help: ## Display this help message
+	@echo "AKRIN AI Chatbot - Simple Development Commands (No Docker)"
+	@echo "========================================================="
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-20s %s\n", $$1, $$2}'
+
+install: ## Install all dependencies
+	@echo "📦 Installing Python dependencies..."
+	pip install -r requirements.txt
+	@echo "📦 Downloading spaCy model..."
+	python -m spacy download en_core_web_md
+	@echo "📦 Installing Node.js dependencies..."
+	npm install
+	@echo "✅ Installation complete!"
+
+setup-local: ## Set up local services (PostgreSQL, Redis)
+	@echo "🚀 Setting up local services..."
+	./scripts/setup_local_services.sh
+
+dev: ## Run development server (no external services required)
+	@echo "🚀 Starting development server..."
+	@echo "📌 Using SQLite database (no PostgreSQL required)"
+	@echo "📌 Using in-memory cache (no Redis required)"
+	@echo "📌 Using Pinecone for vector search"
+	python -m uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
+
+run-local: ## Run with local services (PostgreSQL, Redis)
+	@echo "🚀 Starting services and development server..."
+	./start_services.sh
+	python -m uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
+
+test: ## Run tests
+	@echo "🧪 Running tests..."
+	pytest tests/ -v --cov=src --cov-report=html
+
+test-api: ## Test API keys
+	@echo "🔑 Testing API keys..."
+	python scripts/test_api_keys.py
+
+lint: ## Run code linting
+	@echo "🔍 Running linters..."
+	flake8 src/ tests/ --max-line-length=100
+	mypy src/ --ignore-missing-imports
+
+format: ## Format code
+	@echo "✨ Formatting code..."
+	black src/ tests/
+	isort src/ tests/
+
+clean: ## Clean temporary files
+	@echo "🧹 Cleaning up..."
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find . -type f -name "*.pyc" -delete
+	rm -rf .pytest_cache
+	rm -rf htmlcov
+	rm -rf .coverage
+	rm -rf akrin_chatbot.db
+
+db-init: ## Initialize SQLite database
+	@echo "📊 Initializing SQLite database..."
+	python -c "import asyncio; from src.core.sqlite_db import get_sqlite_db; asyncio.run(get_sqlite_db().initialize())"
+
+seed-knowledge: ## Seed knowledge base with sample data
+	@echo "📚 Seeding knowledge base..."
+	python scripts/seed_knowledge.py
+
+chat-demo: ## Run interactive chat demo
+	@echo "💬 Starting interactive chat demo..."
+	python scripts/chat_demo.py
+
+logs: ## View application logs
+	@echo "📋 Showing recent logs..."
+	tail -f logs/akrin_chatbot*.log
+
+health-check: ## Check if API is running
+	@echo "🏥 Checking API health..."
+	curl -s http://localhost:8000/api/health | python -m json.tool
+
+api-docs: ## Open API documentation in browser
+	@echo "📖 Opening API documentation..."
+	python -m webbrowser http://localhost:8000/api/docs
+
+quick-start: install db-init ## Quick start: install deps and init DB
+	@echo "✅ Quick start complete!"
+	@echo "Now run: make dev"
