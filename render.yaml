@@ -9,8 +9,10 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11
+      # Database - Set your Supabase URL in Render dashboard
+      # Format: postgresql://user:password@host:port/database
       - key: DATABASE_URL
-        value: sqlite:///tmp/akrin_chatbot.db
+        sync: false  # Set in Render dashboard
       - key: USE_IN_MEMORY_CACHE
         value: true
       # API Keys from Render Dashboard (set these in Render UI)
