@@ -81,15 +81,17 @@ class IntentRecognizer(NLPProcessor):
         # Placeholder implementation - replace with actual ML model
         text_lower = text.lower()
         
-        # Simple rule-based intent detection for MVP
+        # Enhanced rule-based intent detection for MVP
         intent_patterns = {
-            Intent.GREETING: ["hello", "hi", "hey", "good morning"],
-            Intent.FAREWELL: ["bye", "goodbye", "see you", "thanks"],
-            Intent.PASSWORD_RESET: ["password", "reset", "forgot", "can't login"],
-            Intent.SERVICE_STATUS: ["status", "down", "working", "issue"],
-            Intent.CREATE_TICKET: ["ticket", "problem", "help", "support"],
-            Intent.BILLING_INQUIRY: ["bill", "invoice", "payment", "charge"],
-            Intent.HUMAN_HANDOFF: ["human", "agent", "person", "talk to someone"]
+            Intent.GREETING: ["hello", "hi", "hey", "good morning", "good afternoon", "good evening", "greetings"],
+            Intent.FAREWELL: ["bye", "goodbye", "see you", "thanks", "thank you", "have a good day"],
+            Intent.TECH_SUPPORT: ["help", "support", "problem", "issue", "trouble", "not working", "broken", "error", "fix"],
+            Intent.PASSWORD_RESET: ["password", "reset", "forgot", "can't login", "login", "access", "locked out"],
+            Intent.SERVICE_STATUS: ["status", "down", "working", "outage", "availability", "online", "offline"],
+            Intent.CREATE_TICKET: ["ticket", "report", "submit", "create ticket", "new ticket"],
+            Intent.BILLING_INQUIRY: ["bill", "invoice", "payment", "charge", "cost", "price", "pricing", "quote"],
+            Intent.GENERAL_INQUIRY: ["services", "what do you offer", "about", "company", "information", "tell me", "explain"],
+            Intent.HUMAN_HANDOFF: ["human", "agent", "person", "talk to someone", "speak to", "representative"]
         }
         
         scores = {}
