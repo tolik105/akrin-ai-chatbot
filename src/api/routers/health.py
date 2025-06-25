@@ -5,9 +5,7 @@ Health check endpoints
 from fastapi import APIRouter, Depends
 from typing import Dict, Any
 import asyncio
-import aioredis
 import asyncpg
-from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime
 
 from src.core.config import settings
@@ -30,26 +28,13 @@ async def check_postgres() -> Dict[str, Any]:
 
 
 async def check_mongodb() -> Dict[str, Any]:
-    """Check MongoDB connectivity"""
-    try:
-        client = AsyncIOMotorClient(settings.mongodb_uri)
-        await client.admin.command('ping')
-        return {"status": "healthy", "latency_ms": 0}
-    except Exception as e:
-        logger.error(f"MongoDB health check failed: {str(e)}")
-        return {"status": "unhealthy", "error": str(e)}
+    """Check MongoDB connectivity (disabled for MVP)"""
+    return {"status": "disabled", "message": "MongoDB not configured for MVP"}
 
 
 async def check_redis() -> Dict[str, Any]:
-    """Check Redis connectivity"""
-    try:
-        redis = await aioredis.from_url(settings.redis_url)
-        await redis.ping()
-        await redis.close()
-        return {"status": "healthy", "latency_ms": 0}
-    except Exception as e:
-        logger.error(f"Redis health check failed: {str(e)}")
-        return {"status": "unhealthy", "error": str(e)}
+    """Check Redis connectivity (disabled for MVP)"""
+    return {"status": "disabled", "message": "Redis not configured for MVP"}
 
 
 @router.get("/")
