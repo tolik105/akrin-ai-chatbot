@@ -10,15 +10,15 @@ from datetime import datetime
 import uuid
 
 from src.core.nlp_engine import NLPEngine, DialogueState
-# from src.knowledge.rag_module import EnhancedRAG  # Disabled for deployment
+# from src.knowledge.rag_module import EnhancedRAG  # Temporarily disabled - requires vector store
 from src.utils.logging import chat_logger as logger
 
 router = APIRouter()
 
 # Initialize services (in production, use dependency injection)
 nlp_engine = NLPEngine()
-# rag_module = EnhancedRAG()  # Disabled for deployment
-rag_module = None
+# rag_module = EnhancedRAG()  # Temporarily disabled - requires vector store setup
+rag_module = None  # Will be enabled once Pinecone is configured
 
 
 class ChatMessage(BaseModel):
