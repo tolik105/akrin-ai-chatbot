@@ -78,7 +78,9 @@ metrics_app = make_asgi_app()
 app.mount("/metrics", metrics_app)
 
 # Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+import os
+static_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "static")
+app.mount("/static", StaticFiles(directory=static_path), name="static")
 
 
 @app.get("/")
