@@ -16,6 +16,7 @@ if __name__ == "__main__":
     
     # Import and run the app
     import uvicorn
+    print(f"Starting AKRIN AI Chatbot on port {port}...")
     uvicorn.run(
         "src.api.main:app",
         host="0.0.0.0",
