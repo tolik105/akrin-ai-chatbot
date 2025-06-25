@@ -7,8 +7,9 @@ from typing import List, Dict, Optional, Tuple
 from dataclasses import dataclass
 import asyncio
 from abc import ABC, abstractmethod
-import numpy as np
+# import numpy as np  # Not needed for MVP
 from datetime import datetime
+from src.utils.logging import knowledge_logger as logger
 
 
 @dataclass
@@ -19,7 +20,7 @@ class Document:
     title: str
     source: str
     metadata: Dict[str, any]
-    embedding: Optional[np.ndarray] = None
+    embedding: Optional[List[float]] = None  # Changed from np.ndarray for MVP
     created_at: datetime = None
     updated_at: datetime = None
 
@@ -98,24 +99,12 @@ class SemanticRetriever:
     """
     
     def __init__(self, vector_store=None, embedding_model=None):
-        # Initialize vector store
+        # Initialize vector store - disabled for MVP
         if vector_store is None:
-            # Try Pinecone first, fall back to local
-            try:
-                from src.core.config import settings
-                if settings.pinecone_api_key:
-                    from src.knowledge.pinecone_vector_store import get_pinecone_store
-                    self.vector_store = get_pinecone_store()
-                    self.use_pinecone = True
-                else:
-                    from src.knowledge.local_vector_store import get_vector_store
-                    self.vector_store = get_vector_store()
-                    self.use_pinecone = False
-            except:
-                # Fallback to local store
-                from src.knowledge.local_vector_store import get_vector_store
-                self.vector_store = get_vector_store()
-                self.use_pinecone = False
+            # For MVP, we'll use a simple in-memory store
+            self.vector_store = None  # Will use simple keyword search instead
+            self.use_pinecone = False
+            logger.info("Vector store disabled for MVP - using simple search")
         else:
             self.vector_store = vector_store
             self.use_pinecone = False
@@ -191,7 +180,9 @@ class SemanticRetriever:
             
             # Sort by score
             if relevant_docs:
-                sorted_indices = np.argsort(scores)[::-1][:top_k]
+                # Sort without numpy for MVP
+                sorted_pairs = sorted(enumerate(scores), key=lambda x: x[1], reverse=True)[:top_k]
+                sorted_indices = [i for i, _ in sorted_pairs]
                 relevant_docs = [relevant_docs[i] for i in sorted_indices]
                 scores = [scores[i] for i in sorted_indices]
         
