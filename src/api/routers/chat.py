@@ -87,16 +87,26 @@ async def send_message(
                 metadata={"handoff_reason": "escalation_required"}
             )
         
-        # Generate response using RAG
-        generation_result = await rag_module.process(
-            query=chat_message.message,
-            context={
-                "intent": nlu_result.intent.value,
-                "entities": {e.type: e.value for e in nlu_result.entities},
-                "session_id": session_id,
-                "turn_count": dialogue_state.turn_count
-            }
-        )
+        # Generate response using RAG or fallback
+        if rag_module is not None:
+            generation_result = await rag_module.process(
+                query=chat_message.message,
+                context={
+                    "intent": nlu_result.intent.value,
+                    "entities": {e.type: e.value for e in nlu_result.entities},
+                    "session_id": session_id,
+                    "turn_count": dialogue_state.turn_count
+                }
+            )
+        else:
+            # Fallback response when RAG is not available
+            from src.core.response_generator import generate_fallback_response
+            generation_result = await generate_fallback_response(
+                message=chat_message.message,
+                intent=nlu_result.intent.value,
+                entities={e.type: e.value for e in nlu_result.entities},
+                session_id=session_id
+            )
         
         # Log response generation
         logger.info(f"Generated response for session {session_id} with confidence {generation_result.confidence}")
