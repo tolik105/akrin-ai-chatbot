@@ -182,9 +182,9 @@ async def search_knowledge(search_query: KnowledgeSearchQuery):
 
 @router.post("/import/url")
 async def import_from_url(
+    background_tasks: BackgroundTasks,
     url: str = Form(...),
-    category: str = Form(...),
-    background_tasks: BackgroundTasks
+    category: str = Form(...)
 ):
     """
     Import knowledge from a URL
