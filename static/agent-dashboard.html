@@ -129,6 +129,33 @@
             background: #f0f8ff;
         }
 
+        .waiting-customer {
+            border-left: 4px solid #ff9800;
+            background: #fff3e0;
+        }
+
+        .waiting-customer:hover {
+            background: #ffe0b2;
+            border-color: #ff9800;
+        }
+
+        .accept-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 8px;
+            width: 100%;
+            transition: background 0.2s;
+        }
+
+        .accept-btn:hover {
+            background: #45a049;
+        }
+
         .chat-item-header {
             display: flex;
             justify-content: space-between;
@@ -526,16 +553,25 @@
         
         // Handle incoming messages
         function handleIncomingMessage(data) {
+            console.log('Received message:', data);
             switch(data.type) {
                 case 'agent_status':
                     updateStats(data.waiting_customers, activeChats.size);
+                    if (data.waiting_customers > 0) {
+                        requestWaitingCustomers();
+                    }
                     break;
-                    
+
                 case 'new_customer_waiting':
                     showToast('New customer waiting!', 'info');
-                    updateQueueStatus();
+                    playNotificationSound();
+                    requestWaitingCustomers();
                     break;
-                    
+
+                case 'waiting_customers':
+                    updateWaitingCustomersList(data.customers);
+                    break;
+
                 case 'customer_assigned':
                     activeChats.set(data.session_id, {
                         session_id: data.session_id,
@@ -543,8 +579,9 @@
                     });
                     updateChatLists();
                     selectChat(data.session_id);
+                    showToast('Customer assigned to you!', 'success');
                     break;
-                    
+
                 case 'customer_message':
                     if (data.session_id === currentSession) {
                         addMessage(data.message, 'customer');
@@ -557,19 +594,85 @@
                             timestamp: data.timestamp
                         });
                     }
+                    // Show notification if not current chat
+                    if (data.session_id !== currentSession) {
+                        showToast('New message from customer', 'info');
+                    }
                     break;
-                    
+
                 case 'queue_status':
                     updateStats(data.waiting_count, data.active_chats);
+                    if (data.waiting_count > 0) {
+                        requestWaitingCustomers();
+                    }
                     break;
             }
         }
         
-        // Accept customer from queue
+        // Request waiting customers list
+        function requestWaitingCustomers() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    action: 'get_waiting_customers'
+                }));
+            }
+        }
+
+        // Update waiting customers list
+        function updateWaitingCustomersList(customers) {
+            const waitingList = document.getElementById('waiting-list');
+            waitingList.innerHTML = '';
+
+            customers.forEach(customer => {
+                const customerItem = createWaitingCustomerItem(customer);
+                waitingList.appendChild(customerItem);
+            });
+        }
+
+        // Create waiting customer item
+        function createWaitingCustomerItem(customer) {
+            const div = document.createElement('div');
+            div.className = 'chat-item waiting-customer';
+            div.setAttribute('data-session', customer.session_id);
+
+            const waitTime = new Date() - new Date(customer.requested_at);
+            const waitMinutes = Math.floor(waitTime / 60000);
+
+            div.innerHTML = `
+                <div class="chat-item-header">
+                    <span class="customer-id">${customer.session_id.substring(0, 8)}</span>
+                    <span class="wait-time">${waitMinutes}m ago</span>
+                </div>
+                <div class="last-message">${customer.reason || 'Requesting human assistance'}</div>
+                <button class="accept-btn" onclick="acceptSpecificCustomer('${customer.session_id}')">Accept Chat</button>
+            `;
+
+            return div;
+        }
+
+        // Accept specific customer from queue
+        function acceptSpecificCustomer(sessionId) {
+            ws.send(JSON.stringify({
+                action: 'accept_customer',
+                session_id: sessionId
+            }));
+        }
+
+        // Accept customer from queue (general)
         function acceptCustomer() {
             ws.send(JSON.stringify({
                 action: 'accept_customer'
             }));
+        }
+
+        // Play notification sound
+        function playNotificationSound() {
+            try {
+                const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT');
+                audio.play().catch(() => {}); // Ignore errors if audio fails
+            } catch (e) {
+                // Ignore audio errors
+            }
         }
         
         // Send message to customer

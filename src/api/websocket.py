@@ -307,10 +307,33 @@ async def websocket_agent_endpoint(websocket: WebSocket, agent_id: str):
             
             elif action == "accept_customer":
                 # Agent accepting a customer from queue
-                if not manager.waiting_queue.empty():
-                    customer_data = await manager.waiting_queue.get()
-                    session_id = customer_data["session_id"]
-                    await manager.assign_agent_to_session(agent_id, session_id)
+                specific_session_id = data.get("session_id")
+
+                if specific_session_id:
+                    # Accept specific customer
+                    temp_queue = []
+                    found_customer = None
+
+                    # Find and remove specific customer from queue
+                    while not manager.waiting_queue.empty():
+                        customer_data = await manager.waiting_queue.get()
+                        if customer_data["session_id"] == specific_session_id:
+                            found_customer = customer_data
+                        else:
+                            temp_queue.append(customer_data)
+
+                    # Put remaining customers back in queue
+                    for customer_data in temp_queue:
+                        await manager.waiting_queue.put(customer_data)
+
+                    if found_customer:
+                        await manager.assign_agent_to_session(agent_id, found_customer["session_id"])
+                else:
+                    # Accept any customer from queue
+                    if not manager.waiting_queue.empty():
+                        customer_data = await manager.waiting_queue.get()
+                        session_id = customer_data["session_id"]
+                        await manager.assign_agent_to_session(agent_id, session_id)
             
             elif action == "transfer_customer":
                 # Transfer customer to another agent
@@ -341,6 +364,27 @@ async def websocket_agent_endpoint(websocket: WebSocket, agent_id: str):
                     "type": "queue_status",
                     "waiting_count": manager.waiting_queue.qsize(),
                     "active_chats": sum(1 for a in manager.session_agent_map.values() if a == agent_id),
+                    "timestamp": datetime.utcnow().isoformat()
+                })
+
+            elif action == "get_waiting_customers":
+                # Get list of waiting customers
+                waiting_customers = []
+                temp_queue = []
+
+                # Extract all items from queue to inspect them
+                while not manager.waiting_queue.empty():
+                    customer_data = await manager.waiting_queue.get()
+                    waiting_customers.append(customer_data)
+                    temp_queue.append(customer_data)
+
+                # Put items back in queue
+                for customer_data in temp_queue:
+                    await manager.waiting_queue.put(customer_data)
+
+                await websocket.send_json({
+                    "type": "waiting_customers",
+                    "customers": waiting_customers,
                     "timestamp": datetime.utcnow().isoformat()
                 })
                 

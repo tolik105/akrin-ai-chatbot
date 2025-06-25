@@ -1,0 +1,32 @@
+<!-- Add this code to your website where you want the chat widget to appear -->
+
+<!-- Option 1: Embedded Chat Widget -->
+<iframe 
+  src="https://akrin-chatbot-api.onrender.com/chat-widget.html"
+  width="400"
+  height="600"
+  style="border: none; position: fixed; bottom: 20px; right: 20px; z-index: 1000;"
+></iframe>
+
+<!-- Option 2: Popup Chat Button -->
+<script>
+  // Create a floating chat button
+  const chatButton = document.createElement('button');
+  chatButton.innerHTML = '💬 Chat with us';
+  chatButton.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #007bff; color: white; border: none; padding: 15px 25px; border-radius: 50px; cursor: pointer; z-index: 1000; font-size: 16px;';
+  
+  chatButton.onclick = function() {
+    window.open(
+      'https://akrin-chatbot-api.onrender.com/chat-widget.html',
+      'AKRIN Chat',
+      'width=400,height=600,right=20,bottom=20'
+    );
+  };
+  
+  document.body.appendChild(chatButton);
+</script>
+
+<!-- Option 3: Direct Link -->
+<a href="https://akrin-chatbot-api.onrender.com/chat-widget.html" target="_blank">
+  Chat with our AI Assistant
+</a>
