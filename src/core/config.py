@@ -4,7 +4,7 @@ Configuration management for AKRIN AI Chatbot
 
 from typing import List, Optional
 from pydantic_settings import BaseSettings
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 import os
 
 
@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     google_ai_api_key: Optional[str] = Field(default=None, env="GOOGLE_AI_API_KEY")
     
     # Database
+    database_url: Optional[str] = Field(default=None, env="DATABASE_URL")
     postgres_host: str = Field(default="localhost", env="POSTGRES_HOST")
     postgres_port: int = Field(default=5432, env="POSTGRES_PORT")
     postgres_db: str = Field(default="akrin_chatbot", env="POSTGRES_DB")
@@ -75,15 +76,19 @@ class Settings(BaseSettings):
     knowledge_chunk_overlap: int = Field(default=50, env="KNOWLEDGE_CHUNK_OVERLAP")
     retrieval_top_k: int = Field(default=5, env="RETRIEVAL_TOP_K")
     
-    @validator("postgres_password", "jwt_secret_key")
-    def validate_required_secrets(cls, v, field):
-        if not v and field.name in ["postgres_password", "jwt_secret_key"]:
-            raise ValueError(f"{field.name} must be set")
+    @field_validator("jwt_secret_key")
+    @classmethod
+    def validate_jwt_secret(cls, v: str) -> str:
+        if not v:
+            raise ValueError("jwt_secret_key must be set")
         return v
     
     @property
     def postgres_url(self) -> str:
         """Construct PostgreSQL connection URL"""
+        # Use DATABASE_URL if provided (for Supabase/Render deployment)
+        if self.database_url:
+            return self.database_url
         return f"postgresql://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
     
     @property
@@ -91,9 +96,10 @@ class Settings(BaseSettings):
         """Check if running in production"""
         return self.app_env == "production"
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    model_config = {
+        "env_file": ".env",
+        "case_sensitive": False
+    }
 
 
 # Singleton instance
