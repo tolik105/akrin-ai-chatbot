@@ -78,9 +78,16 @@ metrics_app = make_asgi_app()
 app.mount("/metrics", metrics_app)
 
 # Mount static files
-import os
-static_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "static")
-app.mount("/static", StaticFiles(directory=static_path), name="static")
+try:
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+    logger.info("Static files mounted successfully at /static")
+except Exception as e:
+    logger.error(f"Failed to mount static files: {e}")
+    # Try alternative path
+    import os
+    static_path = os.path.join(os.getcwd(), "static")
+    logger.info(f"Trying alternative static path: {static_path}")
+    app.mount("/static", StaticFiles(directory=static_path), name="static")
 
 
 @app.get("/")
@@ -91,6 +98,20 @@ async def root():
         "version": "1.0.0",
         "docs": "/api/docs"
     }
+
+
+@app.get("/chat-widget.html")
+async def chat_widget():
+    """Serve chat widget from root for backward compatibility"""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/chat-widget.html")
+
+
+@app.get("/agent-dashboard.html") 
+async def agent_dashboard():
+    """Serve agent dashboard from root for backward compatibility"""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/agent-dashboard.html")
 
 
 @app.exception_handler(HTTPException)
