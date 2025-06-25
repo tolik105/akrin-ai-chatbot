@@ -1,61 +1,30 @@
-# Core Dependencies
+# Minimal requirements for AKRIN AI Chatbot
+# Python 3.11 compatible, Render free tier optimized
+
+# Core Web Framework
 fastapi==0.104.1
-uvicorn==0.24.0
+uvicorn[standard]==0.24.0
 pydantic==2.5.0
 python-multipart==0.0.6
 
-# NLP and ML
+# AI Integration (OpenAI)
 openai==1.3.5
-anthropic==0.7.0
-google-generativeai==0.3.0
-# rasa==3.6.0  # Removed - not compatible with Python 3.11
-spacy==3.7.2
-transformers==4.35.2
-sentence-transformers==2.2.2
 
-# Vector Database
-pinecone-client==2.2.4
-chromadb==0.4.18
-# Alternative: weaviate-client==3.24.2
-
-# Databases
+# Database
 asyncpg==0.29.0
 aiosqlite==0.19.0
-motor==3.3.2
-redis==5.0.1
-sqlalchemy==2.0.23
-
-# Message Queue
-aiokafka==0.10.0
-# Alternative: aio-pika==9.3.0
-
-# Monitoring and Logging
-prometheus-client==0.19.0
-elasticsearch==8.11.0
-python-json-logger==2.0.7
 
 # Authentication
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
-python-oauth2==1.1.0
 
-# API Integration
+# HTTP Client
 httpx==0.25.2
-aiohttp==3.9.1
 
-# Utilities
+# Configuration
 python-dotenv==1.0.0
-pyyaml==6.0.1
-numpy==1.26.2
-pandas==2.1.3
 
-# Testing
-pytest==7.4.3
-pytest-asyncio==0.21.1
-pytest-cov==4.1.0
+# Logging
+python-json-logger==2.0.7
 
-# Development
-black==23.11.0
-flake8==6.1.0
-mypy==1.7.1
-pre-commit==3.5.0
+# CORS and static files are handled by FastAPI

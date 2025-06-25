@@ -1,0 +1,37 @@
+# Core Dependencies (Python 3.11 compatible)
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+python-multipart==0.0.6
+
+# AI Provider (choose one)
+openai==1.3.5
+# anthropic==0.7.0  # Alternative option
+# google-generativeai==0.3.0  # Alternative option
+
+# Simple Vector Storage (lightweight alternative)
+# For MVP, consider using in-memory storage or simple file-based storage
+# chromadb has too many dependencies for free tier
+
+# Database (use PostgreSQL provided by Render)
+asyncpg==0.29.0
+sqlalchemy==2.0.23
+
+# Caching (optional, use Render's Redis if needed)
+# redis==5.0.1  # Uncomment if using Render's Redis addon
+
+# Authentication (minimal)
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# API Integration
+httpx==0.25.2
+
+# Utilities
+python-dotenv==1.0.0
+pyyaml==6.0.1
+
+# Logging
+python-json-logger==2.0.7
+
+# Note: CORS is handled by FastAPI itself, no additional package needed

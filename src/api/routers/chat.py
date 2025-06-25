@@ -10,14 +10,15 @@ from datetime import datetime
 import uuid
 
 from src.core.nlp_engine import NLPEngine, DialogueState
-from src.knowledge.rag_module import EnhancedRAG
+# from src.knowledge.rag_module import EnhancedRAG  # Disabled for deployment
 from src.utils.logging import chat_logger as logger
 
 router = APIRouter()
 
 # Initialize services (in production, use dependency injection)
 nlp_engine = NLPEngine()
-rag_module = EnhancedRAG()
+# rag_module = EnhancedRAG()  # Disabled for deployment
+rag_module = None
 
 
 class ChatMessage(BaseModel):
