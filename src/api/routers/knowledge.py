@@ -218,9 +218,9 @@ async def import_from_url(
 
 @router.post("/import/file")
 async def import_from_file(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
-    category: str = Form(...),
-    background_tasks: BackgroundTasks
+    category: str = Form(...)
 ):
     """
     Import knowledge from uploaded file
